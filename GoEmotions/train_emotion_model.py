@@ -1,11 +1,10 @@
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import layers, models, callbacks
+from tensorflow.keras import layers, models, callbacks, regularizers
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report
 import pickle
-import os
 
 # ==========================================
 # 1. הגדרות (Configuration)
@@ -65,32 +64,46 @@ vectorizer = layers.TextVectorization(
     output_sequence_length=MAX_LENGTH
 )
 vectorizer.adapt(X_train) # המודל לומד את אוצר המילים מהאימון
+# ==========================================
+# 3. בניית המודל (CNN - 1D Convolution)
+# ==========================================
+print("Building Model (CNN Approach)...")
 
-print("Building Model...")
 model = models.Sequential([
-    tf.keras.Input(shape=(1,), dtype=tf.string), # קלט: משפט טקסט רגיל
-    vectorizer,                                  # תרגום: טקסט -> מספרים
+    tf.keras.Input(shape=(1,), dtype=tf.string),
+    vectorizer,
     
-    # שכבת Embedding: הופכת מספרים למשמעות (סמנטיקה)
-    layers.Embedding(input_dim=VOCAB_SIZE, output_dim=EMBEDDING_DIM, mask_zero=True),
+    # הגדלנו את המימד ל-100 כדי לתת ייצוג עשיר יותר למילים
+    # ביטלנו mask_zero כי CNN מסתדר בלי זה
+    layers.Embedding(input_dim=VOCAB_SIZE, output_dim=100, mask_zero=False),
     
-    # שכבת Pooling: מסכמת את כל המשפט לווקטור אחד שמייצג את "רוח הדברים"
-    layers.GlobalAveragePooling1D(),
-    
-    # שכבות Dense: המוח שמקבל החלטות
-    layers.Dense(64, activation='relu'),
-    layers.Dropout(0.3), # מונע שינון (Overfitting) - כנדרש בפרויקט
-    
-    layers.Dense(32, activation='relu'),
+    # Dropout כבר בהתחלה - מקשה על המודל להסתמך על מילים ספציפיות מדי
     layers.Dropout(0.2),
     
-    # שכבת היציאה: הסתברות לכל אחד מ-7 הרגשות
+    # Conv1D: הסורק החכם.
+    # filters=128: מחפש 128 סוגי תבניות שונים
+    # kernel_size=5: מסתכל על חלונות של 5 מילים בכל רגע (הקשר מקומי)
+    layers.Conv1D(filters=128, kernel_size=5, activation='relu', padding='valid'),
+    
+    # GlobalMaxPooling: לוקח רק את הסימן הכי חזק שנמצא במשפט
+    # (למשל: אם נמצאה המילה "זועם", זה הדבר הכי חשוב, תתעלם מהשאר)
+    layers.GlobalMaxPooling1D(),
+    
+    # שכבת עיבוד
+    layers.Dense(64, activation='relu'),
+    
+    # Dropout גבוה למניעת שינון
+    layers.Dropout(0.5),
+    
     layers.Dense(num_classes, activation='softmax')
 ])
 
+# חזרנו למהירות רגילה, כי ה-CNN יציב יותר
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+
 model.compile(
-    optimizer='adam',                 # האלגוריתם שביקשת באפיון
-    loss='categorical_crossentropy',  # פונקציית הטעות לסיווג רב-מחלקתי
+    optimizer=optimizer,
+    loss='categorical_crossentropy',
     metrics=['accuracy']
 )
 
@@ -131,6 +144,6 @@ y_pred_indices = np.argmax(y_pred_probs, axis=1)
 y_test_labels = le.inverse_transform(y_test_enc)
 y_pred_labels = le.inverse_transform(y_pred_indices)
 
-print("\nDetailed Classification Report:")
+print("\nClassification Report:")
 print(classification_report(y_test_labels, y_pred_labels))
 print(f"Model saved successfully to: {MODEL_SAVE_PATH}")
