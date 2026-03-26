@@ -16,7 +16,7 @@ PATHS = {
     "intent_label_encoder": os.path.join(BASE_DIR, "label_encoder.pkl"),
 
     # Machine 2 — Emotion Classification
-    "emotion_model":         os.path.join(BASE_DIR, "emotion_model_optimized.keras"),
+    "emotion_model":         os.path.join(BASE_DIR, "emotion_model"),
     "emotion_label_encoder": os.path.join(BASE_DIR, "emotion_label_encoder.pkl"),
 
     # Machine 3 — Logic Module (Golden Set CSV)

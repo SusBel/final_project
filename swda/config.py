@@ -1,81 +1,47 @@
 """
-=============================================================================
-  config.py — Shared Configuration
-  Dual-Head Chatbot | Machine 1: Intent Classification
-  
-  Single source of truth for intent mapping, paths, and model hyperparams.
-  Both data_preparation.py and model_training.py import from here.
-=============================================================================
+config.py — Backend settings.
+All paths and tuning knobs in one place.
 """
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# ── SwDA act_tag  →  simplified intent label ─────────────────────────────────
-# Source: Switchboard Dialog Act Corpus tag set
-# https://web.stanford.edu/~jurafsky/ws97/manual.august1.html
-INTENT_MAPPING = {
-    # Questions
-    "qy"  : "question",   # Yes/No question
-    "qw"  : "question",   # Wh-question
-    "qo"  : "question",   # Open-ended question
-    "qh"  : "question",   # Rhetorical question
-    "qr"  : "question",   # Or-clause following y/n question
-    "qrr" : "question",   # Or-clause following rhetorical question
-
-    # Requests / directives
-    "ad"  : "request",    # Action directive
-
-    # Statements
-    "sd"  : "statement",  # Statement – non-opinion
-    "sv"  : "statement",  # Statement – opinion/point of view
-
-    # General / social acts
-    "fp"  : "general",    # Conventional opening
-    "fc"  : "general",    # Conventional closing
-    "b"   : "general",    # Acknowledge / back-channel
-    "bk"  : "general",    # Response acknowledgement
-}
-
-# Derived list of final class labels (used by model_training.py)
-INTENT_LABELS = sorted(set(INTENT_MAPPING.values()))   # ['general','question','request','statement']
-
-# ── File / folder paths ───────────────────────────────────────────────────────
 PATHS = {
-    "swda_root"       : ".",                       # root dir to scan for SwDA CSVs
-    "processed_csv"   : "processed_intents.csv",   # output of data_preparation.py
-    "prep_report"     : "prep_report.txt",         # data stats saved after prep
-    "model"           : "intent_model.keras",      # best model checkpoint
-    "tokenizer"       : "tokenizer.pkl",
-    "label_encoder"   : "label_encoder.pkl",
-    "confusion_matrix": "confusion_matrix.png",
-    "training_curves" : "training_history.png",
+    "intent_model":          os.path.join(BASE_DIR, "intent_model.keras"),
+    "intent_tokenizer":      os.path.join(BASE_DIR, "tokenizer.pkl"),
+    "intent_label_encoder":  os.path.join(BASE_DIR, "label_encoder.pkl"),
+    "emotion_model":         os.path.join(BASE_DIR, "emotion_model"),
+    "emotion_label_encoder": os.path.join(BASE_DIR, "emotion_label_encoder.pkl"),
+    "logic_csv":             os.path.join(BASE_DIR, "golden_set_logic_stateful.csv"),
 }
 
-# ── Model / training hyperparameters ─────────────────────────────────────────
-CFG = {
-    # Preprocessing
-    "max_vocab_size" : 10_000,
-    "max_seq_len"    : 50,
-    "min_text_len"   : 5,       # minimum char length to keep a sample
+# Must match max_seq_len used in intent model training
+INTENT_CFG = {"max_seq_len": 50}
 
-    # Train / val / test split
-    "test_size"      : 0.15,
-    "val_size"       : 0.15,
-    "random_state"   : 42,
+THRESHOLDS = {
+    "intent_min_confidence":  0.40,
+    "emotion_min_confidence": 0.35,
+}
 
-    # Architecture
-    "embedding_dim"  : 64,
-    "lstm_units"     : 128,
-    "dense_units"    : 64,
-    "dropout_rate"   : 0.4,
-    "use_bilstm"     : True,    # False → GlobalAveragePooling1D (faster, less accurate)
-
-    # Training
-    "epochs"         : 50,
-    "batch_size"     : 32,
-    "learning_rate"  : 1e-3,
-
-    # Callbacks
-    "patience_es"    : 7,       # EarlyStopping patience (epochs)
-    "patience_lr"    : 3,       # ReduceLROnPlateau patience
-    "lr_factor"      : 0.5,
-    "min_lr"         : 1e-6,
+STATE_TRANSITIONS = {
+    ("start",              "apology_empathy"):                 "bot_apologized",
+    ("start",              "apology_quality_assurance"):       "bot_apologized",
+    ("start",              "apology_rephrase"):                "bot_rephrased",
+    ("start",              "security_reassurance"):            "bot_reassured",
+    ("start",              "urgent_assistance"):               "bot_assisted",
+    ("start",              "provide_information"):             "bot_provided_info",
+    ("start",              "execute_action"):                  "service_completed",
+    ("start",              "process_order_enthusiastic"):      "service_completed",
+    ("start",              "check_account_status"):            "bot_provided_info",
+    ("start",              "empathy_retention_offer"):         "bot_provided_info",
+    ("start",              "empathetic_explanation"):          "bot_provided_info",
+    ("start",              "technical_solution_with_apology"): "bot_provided_info",
+    ("bot_provided_info",  "apology_rephrase"):                "bot_rephrased",
+    ("bot_provided_info",  "close_interaction"):               "start",
+    ("bot_reassured",      "provide_detailed_policy"):         "bot_provided_info",
+    ("bot_apologized",     "escalate_to_human"):               "start",
+    ("bot_apologized",     "offer_compensation"):              "service_completed",
+    ("bot_solved_problem", "polite_closing"):                  "start",
+    ("bot_rephrased",      "happy_closing"):                   "start",
+    ("service_completed",  "thank_and_close"):                 "start",
+    ("service_completed",  "polite_closing"):                  "start",
 }
