@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>PersonaAI — מערכת סיווג שיחות</title>
+<title>PersonaAI — Conversation Classifier</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -15,7 +15,6 @@
     flex-direction: column;
   }
 
-  /* ── TOP BAR ─────────────────────────────────────────────────── */
   .topbar {
     background: #fff;
     border-bottom: 1px solid #e0e0e0;
@@ -34,7 +33,6 @@
   .topbar-logo svg { width: 16px; height: 16px; fill: #fff; }
   .topbar h1 { font-size: 16px; font-weight: 600; color: #1a1a1a; }
 
-  /* ── MAIN LAYOUT ────────────────────────────────────────────── */
   .layout {
     display: grid;
     grid-template-columns: 1fr 340px;
@@ -46,7 +44,6 @@
     width: 100%;
   }
 
-  /* ── PANELS ────────────────────────────────────────────────── */
   .panel {
     background: #fff;
     border: 1px solid #e0e0e0;
@@ -64,7 +61,6 @@
     text-align: center;
   }
 
-  /* ── CHAT PANEL ────────────────────────────────────────────── */
   .chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -76,7 +72,6 @@
     max-height: 560px;
   }
 
-  /* User bubble */
   .msg-user {
     background: #f5f5f5;
     border: 1px solid #e0e0e0;
@@ -86,7 +81,7 @@
     color: #222;
     align-self: flex-end;
     max-width: 85%;
-    text-align: right;
+    flex-shrink: 0;
   }
   .msg-user .msg-label {
     font-size: 11px;
@@ -94,7 +89,6 @@
     margin-bottom: 4px;
   }
 
-  /* Bot analysis card */
   .msg-bot {
     background: #fafafa;
     border: 1px solid #e0e0e0;
@@ -103,6 +97,7 @@
     font-size: 13px;
     align-self: flex-start;
     width: 100%;
+    flex-shrink: 0;
   }
   .msg-bot-header {
     background: #f0f4ff;
@@ -134,23 +129,20 @@
   }
   .analysis-row .label { color: #555; }
   .analysis-row .value { font-weight: 600; }
-  .value.anger  { color: #dc2626; }
-  .value.fear   { color: #7c3aed; }
-  .value.disgust{ color: #b45309; }
-  .value.sadness{ color: #1d4ed8; }
-  .value.joy    { color: #16a34a; }
-  .value.surprise{color: #0891b2; }
-  .value.neutral{ color: #555;    }
-  .value.default{ color: #333;    }
+  .value.anger   { color: #dc2626; }
+  .value.fear    { color: #7c3aed; }
+  .value.disgust { color: #b45309; }
+  .value.sadness { color: #1d4ed8; }
+  .value.joy     { color: #16a34a; }
+  .value.surprise{ color: #0891b2; }
+  .value.neutral { color: #555; }
+  .value.default { color: #333; }
 
   .conf-bar-wrap { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
-  .conf-bar {
-    flex: 1; height: 5px; background: #e5e7eb; border-radius: 99px; overflow: hidden;
-  }
+  .conf-bar { flex: 1; height: 5px; background: #e5e7eb; border-radius: 99px; overflow: hidden; }
   .conf-bar-fill { height: 100%; border-radius: 99px; background: #2563eb; }
-  .conf-pct { font-size: 11px; color: #888; min-width: 30px; text-align: left; }
+  .conf-pct { font-size: 11px; color: #888; min-width: 30px; }
 
-  /* Template chip */
   .template-chip {
     display: inline-block;
     background: #eff6ff;
@@ -160,7 +152,7 @@
     font-size: 12px;
     color: #1d4ed8;
     font-weight: 500;
-    direction: ltr;
+    font-family: monospace;
   }
   .state-chip {
     display: inline-block;
@@ -170,26 +162,30 @@
     padding: 3px 8px;
     font-size: 11px;
     color: #15803d;
+    font-family: monospace;
+  }
+  .state-prev-chip {
+    display: inline-block;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: #374151;
+    font-family: monospace;
   }
 
-  /* Feedback section */
   .feedback-section { background: #f9f9f9; }
-  .feedback-title { font-size: 12px; font-weight: 700; color: #333; margin-bottom: 8px; }
   .radio-group { display: flex; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
   .radio-group label {
     display: flex; align-items: center; gap: 4px;
     font-size: 12px; color: #444; cursor: pointer;
   }
-  .radio-group input[type=radio] { accent-color: #2563eb; cursor: pointer; }
-  .stars { display: flex; gap: 3px; direction: ltr; }
-  .star {
-    font-size: 18px; cursor: pointer; color: #d1d5db; transition: color 0.15s;
-    user-select: none;
-  }
+  .radio-group input[type=checkbox] { accent-color: #2563eb; cursor: pointer; }
+  .stars { display: flex; gap: 3px; }
+  .star { font-size: 18px; cursor: pointer; color: #d1d5db; transition: color 0.15s; user-select: none; }
   .star.active { color: #f59e0b; }
-  .stars-label { font-size: 12px; color: #555; margin-left: 6px; display: flex; align-items: center; }
 
-  /* ── INPUT BAR ─────────────────────────────────────────────── */
   .input-bar {
     display: flex;
     gap: 8px;
@@ -203,7 +199,6 @@
     border-radius: 8px;
     padding: 8px 12px;
     font-size: 14px;
-    direction: rtl;
     outline: none;
     background: #fafafa;
     transition: border 0.15s;
@@ -226,7 +221,6 @@
   .send-btn:hover { background: #1d4ed8; }
   .send-btn:disabled { background: #93c5fd; cursor: not-allowed; }
 
-  /* ── HISTORY PANEL ─────────────────────────────────────────── */
   .history-list {
     flex: 1;
     overflow-y: auto;
@@ -241,44 +235,20 @@
     overflow: hidden;
     cursor: pointer;
     transition: border-color 0.15s;
+    background: #fff;
   }
   .history-item:hover { border-color: #93c5fd; }
-  .history-item.active { border-color: #2563eb; }
+  .history-item.active { border-color: #2563eb; background: #f8fafc; }
   .history-item-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
-    background: #fafafa;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 12px;
   }
   .history-item-header .turn-num { font-size: 13px; font-weight: 600; color: #222; }
   .history-item-header .turn-time { font-size: 11px; color: #999; }
-  .history-item-tags {
-    padding: 6px 12px;
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-  }
-  .tag {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 99px;
-  }
-  .tag.anger   { background: #fee2e2; color: #b91c1c; }
-  .tag.fear    { background: #ede9fe; color: #6d28d9; }
-  .tag.disgust { background: #fef3c7; color: #92400e; }
-  .tag.sadness { background: #dbeafe; color: #1e40af; }
-  .tag.joy     { background: #dcfce7; color: #166534; }
-  .tag.surprise{ background: #cffafe; color: #0e7490; }
-  .tag.neutral { background: #f3f4f6; color: #374151; }
-  .tag.intent  { background: #eff6ff; color: #1d4ed8; }
 
-  .history-footer {
-    padding: 12px;
-    border-top: 1px solid #e8e8e8;
-  }
+  .history-footer { padding: 12px; border-top: 1px solid #e8e8e8; }
   .history-footer-btn {
     width: 100%;
     border: 1px solid #2563eb;
@@ -294,10 +264,10 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
+    font-family: inherit;
   }
   .history-footer-btn:hover { background: #eff6ff; }
 
-  /* ── LOADING SPINNER ───────────────────────────────────────── */
   .spinner {
     width: 18px; height: 18px;
     border: 2px solid #e5e7eb;
@@ -310,111 +280,65 @@
 
   .thinking-row {
     display: flex; align-items: center; gap: 8px;
-    padding: 12px 16px;
-    font-size: 13px;
-    color: #888;
+    padding: 12px 16px; font-size: 13px; color: #888;
   }
 
-  /* ── EMPTY STATE ───────────────────────────────────────────── */
   .empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #bbb;
-    font-size: 13px;
-    padding: 2rem;
-    text-align: center;
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px; color: #bbb; font-size: 13px;
+    padding: 2rem; text-align: center;
   }
   .empty-icon { font-size: 32px; }
 
-  /* ── API CONFIG BANNER ─────────────────────────────────────── */
-  .config-bar {
-    background: #fffbeb;
-    border-bottom: 1px solid #fde68a;
-    padding: 8px 1.5rem;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    font-size: 13px;
-    color: #92400e;
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  .config-bar input {
-    flex: 1;
-    max-width: 320px;
-    border: 1px solid #fcd34d;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 13px;
-    background: #fff;
-    color: #111;
-    direction: ltr;
-    outline: none;
-  }
-  .config-bar input:focus { border-color: #f59e0b; }
-  .api-save-btn {
-    background: #f59e0b; color: #fff; border: none;
-    border-radius: 6px; padding: 4px 14px; font-size: 13px;
-    cursor: pointer; font-weight: 600;
-  }
-  .api-save-btn:hover { background: #d97706; }
+  .msg-user, .msg-bot { animation: fadeIn 0.2s ease; }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
 <div class="topbar">
   <div class="topbar-logo">
     <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
   </div>
-  <h1>PersonaAI — מערכת סיווג שיחות</h1>
+  <h1>PersonaAI — Conversation Classifier</h1>
 </div>
 
-<!-- API CONFIG BAR -->
-<div class="config-bar" id="configBar">
-  <span>כתובת שרת:</span>
-  <input type="text" id="apiUrl" value="http://localhost:8000" placeholder="http://localhost:8000" />
-  <button class="api-save-btn" onclick="saveApiUrl()">שמור</button>
-  <span id="apiStatus" style="color:#888"></span>
-</div>
-
-<!-- MAIN LAYOUT -->
 <div class="layout">
 
-  <!-- LEFT: CHAT PANEL -->
   <div class="panel">
-    <div class="panel-header">חלון שיחה</div>
+    <div class="panel-header">Chat Window</div>
 
     <div class="chat-messages" id="chatMessages">
       <div class="empty-state">
         <div class="empty-icon">💬</div>
-        <div>הקלד הודעה כדי להתחיל שיחה</div>
+        <div>Type a message to start the conversation</div>
       </div>
     </div>
 
     <div class="input-bar">
-      <button class="send-btn" id="sendBtn" onclick="sendMessage()">שלח</button>
-      <input type="text" id="messageInput" placeholder="הקלד הודעה כאן..."
+      <input type="text" id="messageInput" placeholder="Type your message here..."
              onkeydown="if(event.key==='Enter') sendMessage()" />
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
     </div>
   </div>
 
-  <!-- RIGHT: HISTORY PANEL -->
   <div class="panel">
-    <div class="panel-header">היסטוריית סיווגים</div>
+    <div class="panel-header">Chat History</div>
 
     <div class="history-list" id="historyList">
       <div class="empty-state">
-        <div>אין סיווגים עדיין</div>
+        <div>No chat history yet</div>
       </div>
     </div>
 
     <div class="history-footer">
-      <button class="history-footer-btn" onclick="exportHistory()">
-        <span>📋</span>
-        <span>לכל היסטוריית הסיווגים</span>
+      <button class="history-footer-btn" onclick="startNewChat()">
+        <span>➕</span>
+        <span>Start New Chat</span>
       </button>
     </div>
   </div>
@@ -422,52 +346,50 @@
 </div>
 
 <script>
-// ── STATE ──────────────────────────────────────────────────────────────────
-let API_BASE = localStorage.getItem('chatbot_api_url') || 'http://localhost:8000';
-let sessionId = null;
-let turnCounter = 0;
-let historyData = [];
-let feedbackMap = {};  // turnIndex → { radio, stars }
+const API_BASE = 'http://localhost:8000';
+let activeSessionId = null;
+let chatSessions = [];
 
-document.getElementById('apiUrl').value = API_BASE;
-
-function saveApiUrl() {
-  API_BASE = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
-  localStorage.setItem('chatbot_api_url', API_BASE);
-  document.getElementById('apiStatus').textContent = '✓ נשמר';
-  setTimeout(() => document.getElementById('apiStatus').textContent = '', 2000);
+function startNewChat() {
+  if (activeSessionId) {
+    const session = chatSessions.find(s => s.id === activeSessionId);
+    if (session) session.html = document.getElementById('chatMessages').innerHTML;
+  }
+  activeSessionId = null;
+  document.getElementById('chatMessages').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">💬</div>
+      <div>Type a message to start the conversation</div>
+    </div>
+  `;
+  renderSidebar();
 }
 
-// ── SEND MESSAGE ────────────────────────────────────────────────────────────
 async function sendMessage() {
   const input = document.getElementById('messageInput');
-  const text = input.value.trim();
+  const text  = input.value.trim();
   if (!text) return;
 
   input.value = '';
   document.getElementById('sendBtn').disabled = true;
 
-  // Clear empty state
   const chatEl = document.getElementById('chatMessages');
-  const empty = chatEl.querySelector('.empty-state');
-  if (empty) empty.remove();
+  chatEl.querySelector('.empty-state')?.remove();
 
-  // Render user bubble
   appendUserMessage(text);
 
-  // Show thinking indicator
   const thinkingId = 'thinking-' + Date.now();
   chatEl.insertAdjacentHTML('beforeend', `
     <div id="${thinkingId}" class="thinking-row">
       <div class="spinner"></div>
-      <span>מנתח...</span>
+      <span>Analyzing...</span>
     </div>
   `);
   chatEl.scrollTop = chatEl.scrollHeight;
 
   try {
     const payload = { message: text };
-    if (sessionId) payload.session_id = sessionId;
+    if (activeSessionId) payload.session_id = activeSessionId;
 
     const res = await fetch(`${API_BASE}/chat`, {
       method: 'POST',
@@ -478,101 +400,134 @@ async function sendMessage() {
     document.getElementById(thinkingId)?.remove();
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'שגיאה לא ידועה' }));
+      const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
       throw new Error(err.detail || `HTTP ${res.status}`);
     }
 
     const data = await res.json();
-    sessionId = data.session_id;
-    turnCounter++;
-    const turnIdx = turnCounter;
+    const isNewSession = !activeSessionId;
+    activeSessionId = data.session_id;
 
-    // Render bot analysis card
-    appendBotAnalysis(data, turnIdx);
+    if (isNewSession) {
+      chatSessions.unshift({
+        id: activeSessionId,
+        title: text.length > 25 ? text.substring(0, 25) + '...' : text,
+        time: new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }),
+        html: ''
+      });
+    }
 
-    // Add to history panel
-    addToHistory(data, turnIdx, text);
+    appendBotAnalysis(data, Date.now());
 
-    // Store for export
-    historyData.push({ turn: turnIdx, message: text, ...data });
+    const session = chatSessions.find(s => s.id === activeSessionId);
+    if (session) session.html = document.getElementById('chatMessages').innerHTML;
+
+    renderSidebar();
 
   } catch (e) {
     document.getElementById(thinkingId)?.remove();
-    appendErrorMessage(e.message);
+    chatEl.insertAdjacentHTML('beforeend', `
+      <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;font-size:13px;color:#b91c1c;">
+        ❌ Error: ${escHtml(e.message)}
+      </div>
+    `);
   }
 
   document.getElementById('sendBtn').disabled = false;
   input.focus();
-  chatEl.scrollTop = chatEl.scrollHeight;
+  document.getElementById('chatMessages').scrollTop = 99999;
 }
 
-// ── RENDER USER BUBBLE ──────────────────────────────────────────────────────
+function loadChat(id) {
+  if (activeSessionId) {
+    const currentSession = chatSessions.find(s => s.id === activeSessionId);
+    if (currentSession) currentSession.html = document.getElementById('chatMessages').innerHTML;
+  }
+  const targetSession = chatSessions.find(s => s.id === id);
+  if (!targetSession) return;
+  activeSessionId = id;
+  document.getElementById('chatMessages').innerHTML = targetSession.html;
+  renderSidebar();
+  document.getElementById('chatMessages').scrollTop = 99999;
+}
+
+function renderSidebar() {
+  const list = document.getElementById('historyList');
+  if (chatSessions.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div>No chat history yet</div></div>`;
+    return;
+  }
+  list.innerHTML = chatSessions.map(s => `
+    <div class="history-item ${s.id === activeSessionId ? 'active' : ''}" onclick="loadChat('${s.id}')">
+      <div class="history-item-header">
+        <span class="turn-num">${escHtml(s.title)}</span>
+        <span class="turn-time">${s.time}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
 function appendUserMessage(text) {
-  const chatEl = document.getElementById('chatMessages');
-  chatEl.insertAdjacentHTML('beforeend', `
+  document.getElementById('chatMessages').insertAdjacentHTML('beforeend', `
     <div class="msg-user">
-      <div class="msg-label">[משתמש]:</div>
+      <div class="msg-label">[User]:</div>
       ${escHtml(text)}
     </div>
   `);
 }
 
-// ── RENDER BOT ANALYSIS CARD ────────────────────────────────────────────────
 function appendBotAnalysis(data, turnIdx) {
-  const chatEl = document.getElementById('chatMessages');
-  const emotionClass = data.emotion || 'neutral';
-  const intentConf = Math.round((data.intent_conf || 0) * 100);
   const emotionConf = Math.round((data.emotion_conf || 0) * 100);
+  const intentConf  = Math.round((data.intent_conf  || 0) * 100);
+  const eColor      = emotionColor(data.emotion);
 
-  const emotionHe = translateEmotion(data.emotion);
-  const intentHe  = translateIntent(data.intent);
-
-  chatEl.insertAdjacentHTML('beforeend', `
+  document.getElementById('chatMessages').insertAdjacentHTML('beforeend', `
     <div class="msg-bot" id="bot-${turnIdx}">
-      <div class="msg-bot-header">[מערכת - PersonaAI]:</div>
+      <div class="msg-bot-header">[System — PersonaAI]:</div>
 
-      <!-- Internal analysis -->
       <div class="analysis-section">
-        <div class="analysis-title">ניתוח פנימי:</div>
+        <div class="analysis-title">Internal Analysis:</div>
         <div class="analysis-row">
-          <span class="label">• רגש:</span>
-          <span class="value ${emotionClass}">${emotionHe} (${data.emotion})</span>
+          <span class="label">• Emotion:</span>
+          <span class="value ${data.emotion}">${capitalize(data.emotion)}</span>
         </div>
-        <div class="conf-bar-wrap" style="margin-right:12px; margin-bottom:4px;">
-          <div class="conf-bar"><div class="conf-bar-fill" style="width:${emotionConf}%; background:${emotionColor(data.emotion)}"></div></div>
+        <div class="conf-bar-wrap" style="margin-left:12px;margin-bottom:4px;">
+          <div class="conf-bar"><div class="conf-bar-fill" style="width:${emotionConf}%;background:${eColor}"></div></div>
           <span class="conf-pct">${emotionConf}%</span>
         </div>
         <div class="analysis-row">
-          <span class="label">• כוונה:</span>
-          <span class="value default">${intentHe} (${data.intent})</span>
+          <span class="label">• Intent:</span>
+          <span class="value default">${capitalize(data.intent)}</span>
         </div>
-        <div class="conf-bar-wrap" style="margin-right:12px;">
+        <div class="conf-bar-wrap" style="margin-left:12px;">
           <div class="conf-bar"><div class="conf-bar-fill" style="width:${intentConf}%"></div></div>
           <span class="conf-pct">${intentConf}%</span>
         </div>
       </div>
 
-      <!-- Selected template -->
       <div class="analysis-section">
-        <div class="analysis-title">תבנית תגובה שנבחרה:</div>
-        <div style="margin-top:4px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <div class="analysis-title">Selected Response Template:</div>
+        <div style="margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <span class="template-chip">${data.action}</span>
-          <span style="font-size:11px; color:#888">${data.prev_state} → <span class="state-chip">${data.next_state}</span></span>
+          <span style="font-size:11px;color:#888;display:flex;align-items:center;gap:4px;">
+            <span class="state-prev-chip">${data.prev_state}</span>
+            →
+            <span class="state-chip">${data.next_state}</span>
+          </span>
         </div>
       </div>
 
-      <!-- System feedback -->
       <div class="analysis-section feedback-section">
-        <div class="analysis-title">משוב למערכת:</div>
-        <div class="radio-group" id="radio-${turnIdx}">
-          <label><input type="radio" name="fb-${turnIdx}" value="correct" onchange="saveFeedback(${turnIdx})" /> צדק</label>
-          <label><input type="radio" name="fb-${turnIdx}" value="wrong_intent" onchange="saveFeedback(${turnIdx})" /> טעה בכוונה</label>
-          <label><input type="radio" name="fb-${turnIdx}" value="wrong_emotion" onchange="saveFeedback(${turnIdx})" /> טעה ברגש</label>
+        <div class="analysis-title">System Feedback:</div>
+        <div class="radio-group">
+          <label><input type="checkbox" onchange="this.toggleAttribute('checked', this.checked)" /> Correct</label>
+          <label><input type="checkbox" onchange="this.toggleAttribute('checked', this.checked)" /> Wrong intent</label>
+          <label><input type="checkbox" onchange="this.toggleAttribute('checked', this.checked)" /> Wrong emotion</label>
         </div>
-        <div style="display:flex; align-items:center; gap:4px;">
-          <span style="font-size:12px; color:#555;">דירוג טבנית:</span>
-          <div class="stars" id="stars-${turnIdx}">
-            ${[1,2,3,4,5].map(i => `<span class="star" data-val="${i}" onclick="setStar(${turnIdx}, ${i})">★</span>`).join('')}
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:12px;color:#555;">Template rating:</span>
+          <div class="stars">
+            ${[1,2,3,4,5].map(i=>`<span class="star" data-val="${i}" onclick="setStar(this.parentElement, ${i})">★</span>`).join('')}
           </div>
         </div>
       </div>
@@ -580,133 +535,25 @@ function appendBotAnalysis(data, turnIdx) {
   `);
 }
 
-function appendErrorMessage(msg) {
-  const chatEl = document.getElementById('chatMessages');
-  chatEl.insertAdjacentHTML('beforeend', `
-    <div style="background:#fef2f2; border:1px solid #fca5a5; border-radius:8px; padding:10px 14px; font-size:13px; color:#b91c1c;">
-      ❌ שגיאה: ${escHtml(msg)}
-    </div>
-  `);
-}
-
-// ── FEEDBACK ────────────────────────────────────────────────────────────────
-function saveFeedback(turnIdx) {
-  const selected = document.querySelector(`input[name="fb-${turnIdx}"]:checked`);
-  if (!feedbackMap[turnIdx]) feedbackMap[turnIdx] = {};
-  feedbackMap[turnIdx].radio = selected ? selected.value : null;
-  updateHistoryItem(turnIdx);
-}
-
-function setStar(turnIdx, val) {
-  if (!feedbackMap[turnIdx]) feedbackMap[turnIdx] = {};
-  feedbackMap[turnIdx].stars = val;
-  const starsEl = document.getElementById(`stars-${turnIdx}`);
-  if (!starsEl) return;
-  starsEl.querySelectorAll('.star').forEach(s => {
-    s.classList.toggle('active', parseInt(s.dataset.val) <= val);
+function setStar(container, val) {
+  container.querySelectorAll('.star').forEach(s => {
+    const isActive = parseInt(s.dataset.val) <= val;
+    s.classList.toggle('active', isActive);
   });
-  updateHistoryItem(turnIdx);
+  const session = chatSessions.find(s => s.id === activeSessionId);
+  if (session) session.html = document.getElementById('chatMessages').innerHTML;
 }
 
-// ── HISTORY ─────────────────────────────────────────────────────────────────
-function addToHistory(data, turnIdx, userText) {
-  const histEl = document.getElementById('historyList');
-  const empty = histEl.querySelector('.empty-state');
-  if (empty) empty.remove();
-
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
-  const emotionHe = translateEmotion(data.emotion);
-
-  histEl.insertAdjacentHTML('afterbegin', `
-    <div class="history-item" id="hist-${turnIdx}" onclick="scrollToTurn(${turnIdx})">
-      <div class="history-item-header">
-        <span class="turn-num">#${turnIdx} (עכשיו)</span>
-        <span class="turn-time">${timeStr}</span>
-      </div>
-      <div class="history-item-tags" id="hist-tags-${turnIdx}">
-        <span class="tag ${data.emotion}">${emotionHe}</span>
-        <span class="tag intent">${translateIntent(data.intent)}</span>
-      </div>
-    </div>
-  `);
-}
-
-function updateHistoryItem(turnIdx) {
-  const fb = feedbackMap[turnIdx];
-  if (!fb) return;
-  const tagsEl = document.getElementById(`hist-tags-${turnIdx}`);
-  if (!tagsEl) return;
-  const existing = tagsEl.querySelectorAll('.tag.feedback');
-  existing.forEach(e => e.remove());
-
-  if (fb.radio) {
-    const labels = { correct:'✓ צדק', wrong_intent:'✗ כוונה', wrong_emotion:'✗ רגש' };
-    const colors = { correct:'background:#dcfce7;color:#166534', wrong_intent:'background:#fee2e2;color:#991b1b', wrong_emotion:'background:#fef3c7;color:#92400e' };
-    tagsEl.insertAdjacentHTML('beforeend', `
-      <span class="tag feedback" style="${colors[fb.radio]}">${labels[fb.radio]}</span>
-    `);
-  }
-  if (fb.stars) {
-    tagsEl.insertAdjacentHTML('beforeend', `
-      <span class="tag feedback" style="background:#fef9c3;color:#854d0e">${'★'.repeat(fb.stars)}</span>
-    `);
-  }
-}
-
-function scrollToTurn(turnIdx) {
-  const el = document.getElementById(`bot-${turnIdx}`);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  document.querySelectorAll('.history-item').forEach(i => i.classList.remove('active'));
-  document.getElementById(`hist-${turnIdx}`)?.classList.add('active');
-}
-
-// ── EXPORT ──────────────────────────────────────────────────────────────────
-function exportHistory() {
-  const rows = historyData.map(d => ({
-    turn: d.turn,
-    message: d.message,
-    emotion: d.emotion,
-    emotion_conf: d.emotion_conf,
-    intent: d.intent,
-    intent_conf: d.intent_conf,
-    action: d.action,
-    prev_state: d.prev_state,
-    next_state: d.next_state,
-    feedback_radio: feedbackMap[d.turn]?.radio || '',
-    feedback_stars: feedbackMap[d.turn]?.stars || ''
-  }));
-
-  const csv = [
-    Object.keys(rows[0] || {}).join(','),
-    ...rows.map(r => Object.values(r).map(v => `"${String(v).replace(/"/g,'""')}"`).join(','))
-  ].join('\n');
-
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `classification_history_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-}
-
-// ── HELPERS ─────────────────────────────────────────────────────────────────
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-
-function translateEmotion(e) {
-  const m = { anger:'כעס', fear:'פחד', disgust:'גועל', sadness:'עצב', joy:'שמחה', surprise:'הפתעה', neutral:'ניטרלי' };
-  return m[e] || e;
+function capitalize(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 }
-
-function translateIntent(i) {
-  const m = { question:'שאלה', request:'בקשה', statement:'הצהרה', general:'כללי' };
-  return m[i] || i;
-}
-
 function emotionColor(e) {
-  const m = { anger:'#dc2626', fear:'#7c3aed', disgust:'#b45309', sadness:'#1d4ed8', joy:'#16a34a', surprise:'#0891b2', neutral:'#6b7280' };
-  return m[e] || '#2563eb';
+  return { anger:'#dc2626', fear:'#7c3aed', disgust:'#b45309',
+           sadness:'#1d4ed8', joy:'#16a34a', surprise:'#0891b2',
+           neutral:'#6b7280' }[e] || '#2563eb';
 }
 </script>
 </body>
