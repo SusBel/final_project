@@ -9,7 +9,7 @@ Endpoints:
   GET    /logic/actions     — list all valid action codes (useful for debugging)
 
 Run:
-  uvicorn main:app --reload --host 0.0.0.0 --port 8000
+    python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 Interactive docs:
   http://localhost:8000/docs

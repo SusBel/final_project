@@ -1,31 +1,42 @@
 """
 config.py — Paths and settings for the Dual-Head Chatbot backend.
-Adjust paths here to match where your model files live on disk.
 """
 
 import os
 
-# ─── Base directory (default: same folder as this file) ────────────────────
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+INTENT_MODEL_PATH          = r"C:\Finals_Project\swda\intent_model.keras"
+INTENT_TOKENIZER_PATH      = r"C:\Finals_Project\swda\intent_tokenizer.pkl"
+INTENT_LABEL_ENCODER_PATH  = r"C:\Finals_Project\swda\intent_label_encoder.pkl"
 
-# ─── Model artefact paths ────────────────────────────────────────────────────
+EMOTION_MODEL_PATH         = r"C:\Finals_Project\GoEmotions\emotion_model_v5.keras"
+EMOTION_LABEL_ENCODER_PATH = r"C:\Finals_Project\GoEmotions\emotion_label_encoder.pkl"
+
+LOGIC_CSV_PATH             = r"C:\Finals_Project\GoldenSet\golden_set_logic_stateful.csv"
+
+def _p(override, filename):
+    """Use the override path if set, otherwise look next to this file."""
+    if override is not None:
+        return override
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+
+
 PATHS = {
     # Machine 1 — Intent Classification
-    "intent_model":         os.path.join(BASE_DIR, "intent_model.keras"),
-    "intent_tokenizer":     os.path.join(BASE_DIR, "tokenizer.pkl"),
-    "intent_label_encoder": os.path.join(BASE_DIR, "label_encoder.pkl"),
+    "intent_model":         _p(INTENT_MODEL_PATH,          "intent_model.keras"),
+    "intent_tokenizer":     _p(INTENT_TOKENIZER_PATH,      "tokenizer.pkl"),
+    "intent_label_encoder": _p(INTENT_LABEL_ENCODER_PATH,  "label_encoder.pkl"),
 
     # Machine 2 — Emotion Classification
-    "emotion_model":         os.path.join(BASE_DIR, "emotion_model"),
-    "emotion_label_encoder": os.path.join(BASE_DIR, "emotion_label_encoder.pkl"),
+    "emotion_model":         _p(EMOTION_MODEL_PATH,         "emotion_model_v5.keras"),
+    "emotion_label_encoder": _p(EMOTION_LABEL_ENCODER_PATH, "emotion_label_encoder.pkl"),
 
     # Machine 3 — Logic Module (Golden Set CSV)
-    "logic_csv": os.path.join(BASE_DIR, "golden_set_logic_stateful.csv"),
+    "logic_csv": _p(LOGIC_CSV_PATH, "golden_set_logic_stateful.csv"),
 }
 
 # ─── Intent model preprocessing settings (must match training config) ────────
 INTENT_CFG = {
-    "max_seq_len": 50,      # same value as CFG["max_seq_len"] in training
+    "max_seq_len": 50,
 }
 
 # ─── Confidence thresholds ────────────────────────────────────────────────────
@@ -36,7 +47,6 @@ THRESHOLDS = {
 
 # ─── History-state transitions ────────────────────────────────────────────────
 # Maps (current_history_state, bot_action) → next_history_state
-# This drives stateful multi-turn behaviour.
 STATE_TRANSITIONS = {
     ("start",               "apology_empathy"):                  "bot_apologized",
     ("start",               "apology_quality_assurance"):        "bot_apologized",
