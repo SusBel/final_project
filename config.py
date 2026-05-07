@@ -4,14 +4,14 @@ config.py — Paths and settings for the Dual-Head Chatbot backend.
 
 import os
 
-INTENT_MODEL_PATH          = r"C:\Finals_Project\swda\intent_model.keras"
-INTENT_TOKENIZER_PATH      = r"C:\Finals_Project\swda\intent_tokenizer.pkl"
-INTENT_LABEL_ENCODER_PATH  = r"C:\Finals_Project\swda\intent_label_encoder.pkl"
+INTENT_MODEL_PATH         = r"C:\Finals_Project\swda\intent_model.keras"  
+INTENT_TOKENIZER_PATH     = r"C:\Finals_Project\swda\intent_tokenizer.pkl"   
+INTENT_LABEL_ENCODER_PATH = r"C:\Finals_Project\swda\intent_label_encoder.pkl"   
 
-EMOTION_MODEL_PATH         = r"C:\Finals_Project\GoEmotions\emotion_model_v5.keras"
-EMOTION_LABEL_ENCODER_PATH = r"C:\Finals_Project\GoEmotions\emotion_label_encoder.pkl"
+EMOTION_MODEL_PATH        = r"C:\Finals_Project\GoEmotions\emotion_model"
+EMOTION_LABEL_ENCODER_PATH= r"C:\Finals_Project\GoEmotions\emotion_label_encoder.pkl"  
 
-LOGIC_CSV_PATH             = r"C:\Finals_Project\GoldenSet\golden_set_logic_stateful.csv"
+LOGIC_CSV_PATH            = r"C:\Finals_Project\GoldenSet\golden_set_logic_stateful.csv"   
 
 def _p(override, filename):
     """Use the override path if set, otherwise look next to this file."""
@@ -35,9 +35,7 @@ PATHS = {
 }
 
 # ─── Intent model preprocessing settings (must match training config) ────────
-INTENT_CFG = {
-    "max_seq_len": 50,
-}
+INTENT_CFG = {"max_seq_len": 50}
 
 # ─── Confidence thresholds ────────────────────────────────────────────────────
 THRESHOLDS = {

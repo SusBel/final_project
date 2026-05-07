@@ -155,7 +155,7 @@ logic_scenarios = [
 df_logic = pd.DataFrame(logic_scenarios)
 
 # Save to CSV
-filename = 'golden_set_logic_stateful.csv'
+filename = 'golden_set_logic.csv'
 df_logic.to_csv(filename, index=False)
 
 print(f"Generated '{filename}' with {len(df_logic)} scenarios.")

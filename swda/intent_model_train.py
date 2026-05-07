@@ -43,7 +43,7 @@ LR          = 1e-3
 TEST_SIZE   = 0.15
 VAL_SIZE    = 0.15
 
-DATA_PATH   = "swda\processed_intents_AUGMENTED.csv"
+DATA_PATH   = "swda\swda_data\processed_intents.csv"
 MODEL_OUT   = "intent_model.keras"
 TOK_OUT     = "tokenizer.pkl"
 LE_OUT      = "label_encoder.pkl"

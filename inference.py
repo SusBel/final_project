@@ -31,7 +31,7 @@ INTENT_LABEL_ENCODER_PATH = r"C:\Finals_Project\swda\intent_label_encoder.pkl"
 EMOTION_MODEL_PATH        = r"C:\Finals_Project\GoEmotions\emotion_model"
 EMOTION_LABEL_ENCODER_PATH= r"C:\Finals_Project\GoEmotions\emotion_label_encoder.pkl"  
 
-LOGIC_CSV_PATH            = r"C:\Finals_Project\GoldenSet\golden_set_logic_stateful.csv"   
+LOGIC_CSV_PATH            = r"C:\Finals_Project\GoldenSet\golden_set_logic.csv"   
 
 def _resolve(override, config_key: str) -> str:
     """Returns the override path if set, otherwise falls back to config.py."""
@@ -114,8 +114,18 @@ class ModelBundle:
             (r["input_intent"], r["input_emotion"], r["history_state"]): r["expected_response"]
             for _, r in df.iterrows()
         }
+        # ── KNN Fallback Loading ──────────────────────────────────────────────
+        knn_model_path = r"C:\Finals_Project\GoldenSet\logic_knn_model.pkl"
+        logger.info(f"Loading Logic KNN model from: {knn_model_path}")
+        with open(knn_model_path, 'rb') as f:
+            self.knn_model = pickle.load(f)
+            
+        knn_encoder_path = r"C:\Finals_Project\GoldenSet\logic_encoder.pkl"
+        logger.info(f"Loading Logic KNN encoder from: {knn_encoder_path}")
+        with open(knn_encoder_path, 'rb') as f:
+            self.knn_encoder = pickle.load(f)
 
-        logger.info("All models loaded ✓")
+        logger.info("All models loaded successfully")
 
 
 # =============================================================================
@@ -153,18 +163,22 @@ def _predict_emotion(bundle: ModelBundle, text: str) -> tuple[str, float]:
 
 def _lookup_action(bundle: ModelBundle, intent: str, emotion: str, state: str) -> str:
     """
-    Look up the best matching action in the logic map.
-    Falls back from specific → general → neutral → 'fallback'.
+    Look up the best matching action.
+    Uses Exact Match (Dictionary) first. If not found, falls back to KNN.
     """
-    if (intent, emotion, state)     in bundle.logic_map:
+    # 1. חיפוש התאמה מדויקת במילון
+    if (intent, emotion, state) in bundle.logic_map:
         return bundle.logic_map[(intent, emotion, state)]
-    if (intent, emotion, "start")   in bundle.logic_map:
-        return bundle.logic_map[(intent, emotion, "start")]
-    if (intent, "neutral", "start") in bundle.logic_map:
-        return bundle.logic_map[(intent, "neutral", "start")]
-
-    logger.warning(f"No logic match for ({intent}, {emotion}, {state}) — using fallback")
-    return "fallback"
+    
+    # שלב 2': מנגנון גיבוי מבוסס KNN!    
+    logger.info(f"No exact match for ({intent}, {emotion}, {state}). Using KNN Fallback...")
+    
+    X_new = pd.DataFrame([[intent, emotion, state]], 
+                         columns=['input_intent', 'input_emotion', 'history_state'])
+    X_new_encoded = bundle.knn_encoder.transform(X_new)
+    predicted_action = bundle.knn_model.predict(X_new_encoded)[0]
+    
+    return predicted_action
 
 
 # =============================================================================
