@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PersonaAI - Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+        .login-container {
+            background: #fff;
+            padding: 2.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-container h2 {
+            margin-bottom: 1.5rem;
+            color: #1a1a1a;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        .login-btn:hover {
+            background: #1d4ed8;
+        }
+        .error-msg {
+            color: red;
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>PersonaAI Login</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username / Email</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="login-btn">Log In</button>
+            <div class="error-msg" id="errorMsg">Invalid credentials. Please try again.</div>
+        </form>
+        <a href="register.html" style="text-align: center; display: block; margin-top: 15px;">Don't have an account? Sign up</a>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); // מונע מהדף להתרענן
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            try {
+                // שליחת בקשת התחברות לשרת ה-Java
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(data);
+                    //שמירת פרטי המשתמש בדפדפן 
+                    if(data.userId) {
+                        localStorage.setItem("userId", data.userId);
+                    }
+                    if(data.username) {
+                        localStorage.setItem("username", data.username);
+                    }
+                    // ניתוב אוטומטי לשרת ה-Python על פי הכתובת שהתקבלה מהשרת
+                    window.location.href = data.redirectUrl; 
+                } else {
+                    // הצגת שגיאה במקרה של כשל בהתחברות
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error during login:', error);
+                errorMsg.innerText = 'Server error. Please try again later.';
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

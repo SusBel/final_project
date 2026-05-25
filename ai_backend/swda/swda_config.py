@@ -5,11 +5,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import PATHS, THRESHOLDS, INTENT_CFG
 
 # ─── SwDA training paths (only relevant to the SwDA pipeline) ────────────────
-SWDA_DATA_DIR = r"C:\Finals_Project\swda\swda_data"
+SWDA_DATA_DIR = r"C:\Finals_Project\ai_backend\swda\swda_data"
 
 PATHS = {
     **PATHS,   # keep all the root paths
-    "swda_root"    : r"C:\Finals_Project\swda",
+    "swda_root"    : r"C:\Finals_Project\ai_backend\swda",
     "processed_csv": os.path.join(SWDA_DATA_DIR, "processed_intents.csv"),
     "prep_report"  : os.path.join(SWDA_DATA_DIR, "prep_report.txt"),
     "augmented_csv": os.path.join(SWDA_DATA_DIR, "processed_intents_AUGMENTED.csv"),

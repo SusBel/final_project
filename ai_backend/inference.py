@@ -24,14 +24,14 @@ from config import PATHS, INTENT_CFG, THRESHOLDS, STATE_TRANSITIONS
 
 logger = logging.getLogger(__name__)
 
-INTENT_MODEL_PATH         = r"C:\Finals_Project\swda\intent_model.keras"  
-INTENT_TOKENIZER_PATH     = r"C:\Finals_Project\swda\intent_tokenizer.pkl"   
-INTENT_LABEL_ENCODER_PATH = r"C:\Finals_Project\swda\intent_label_encoder.pkl"   
+INTENT_MODEL_PATH         = r"C:\Finals_Project\ai_backend\swda\intent_model.keras"  
+INTENT_TOKENIZER_PATH     = r"C:\Finals_Project\ai_backend\swda\intent_tokenizer.pkl"   
+INTENT_LABEL_ENCODER_PATH = r"C:\Finals_Project\ai_backend\swda\intent_label_encoder.pkl"   
 
-EMOTION_MODEL_PATH        = r"C:\Finals_Project\GoEmotions\emotion_model"
-EMOTION_LABEL_ENCODER_PATH= r"C:\Finals_Project\GoEmotions\emotion_label_encoder.pkl"  
+EMOTION_MODEL_PATH        = r"C:\Finals_Project\ai_backend\GoEmotions\emotion_model"
+EMOTION_LABEL_ENCODER_PATH= r"C:\Finals_Project\ai_backend\GoEmotions\emotion_label_encoder.pkl"  
 
-LOGIC_CSV_PATH            = r"C:\Finals_Project\GoldenSet\golden_set_logic.csv"   
+LOGIC_CSV_PATH            = r"C:\Finals_Project\ai_backend\GoldenSet\golden_set_logic.csv"   
 
 def _resolve(override, config_key: str) -> str:
     """Returns the override path if set, otherwise falls back to config.py."""
@@ -115,12 +115,12 @@ class ModelBundle:
             for _, r in df.iterrows()
         }
         # ── KNN Fallback Loading ──────────────────────────────────────────────
-        knn_model_path = r"C:\Finals_Project\GoldenSet\logic_knn_model.pkl"
+        knn_model_path = r"C:\Finals_Project\ai_backend\GoldenSet\logic_knn_model.pkl"
         logger.info(f"Loading Logic KNN model from: {knn_model_path}")
         with open(knn_model_path, 'rb') as f:
             self.knn_model = pickle.load(f)
             
-        knn_encoder_path = r"C:\Finals_Project\GoldenSet\logic_encoder.pkl"
+        knn_encoder_path = r"C:\Finals_Project\ai_backend\GoldenSet\logic_encoder.pkl"
         logger.info(f"Loading Logic KNN encoder from: {knn_encoder_path}")
         with open(knn_encoder_path, 'rb') as f:
             self.knn_encoder = pickle.load(f)

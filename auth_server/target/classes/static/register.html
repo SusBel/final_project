@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PersonaAI - Sign Up</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+        .register-container {
+            background: #fff;
+            padding: 2.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .register-container h2 {
+            margin-bottom: 1.5rem;
+            color: #1a1a1a;
+            text-align: center;
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block; margin-bottom: 0.5rem; color: #555;
+        }
+        .form-group input {
+            width: 100%; padding: 0.75rem; border: 1px solid #ccc;
+            border-radius: 5px; box-sizing: border-box;
+        }
+        .btn {
+            width: 100%; padding: 0.75rem; background: #16a34a;
+            color: white; border: none; border-radius: 5px;
+            font-size: 1rem; cursor: pointer; margin-top: 1rem;
+        }
+        .btn:hover { background: #15803d; }
+        .msg { text-align: center; margin-top: 1rem; display: none; }
+        .error { color: red; }
+        .success { color: green; }
+        .link { display: block; text-align: center; margin-top: 15px; text-decoration: none; color: #2563eb; }
+        .link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="register-container">
+        <h2>Create an Account</h2>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit" class="btn">Sign Up</button>
+            <div class="msg" id="statusMsg"></div>
+            <a href="login.html" class="link">Already have an account? Log in</a>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const statusMsg = document.getElementById('statusMsg');
+
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const message = await response.text();
+
+                if (response.ok) {
+                    statusMsg.className = 'msg success';
+                    statusMsg.innerText = 'Registration successful! Redirecting...';
+                    statusMsg.style.display = 'block';
+                    setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+                } else {
+                    statusMsg.className = 'msg error';
+                    statusMsg.innerText = message || 'Registration failed.';
+                    statusMsg.style.display = 'block';
+                }
+            } catch (error) {
+                statusMsg.className = 'msg error';
+                statusMsg.innerText = 'Server error. Please try again.';
+                statusMsg.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -5,7 +5,7 @@ Run:
     python emotion_model.py
 
 Outputs:
-    emotion_model/                 — SavedModel folder (required for TextVectorization)
+    ai_backend/GoEmotions/emotion_model/                 — SavedModel folder (required for TextVectorization)
     emotion_label_encoder.pkl
 """
 
@@ -23,9 +23,9 @@ from tensorflow.keras import layers, regularizers
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 # ── Config (mirrors your original train_emotion_model.py) ────────────────────
-TRAIN_FILE  = "GoEmotions/emotion_data/processed_emotions_train.csv"
-DEV_FILE    = "GoEmotions/emotion_data/processed_emotions_dev.csv"
-TEST_FILE   = "GoEmotions/emotion_data/processed_emotions_test.csv"
+TRAIN_FILE  = "ai_backend/GoEmotions/emotion_data/processed_emotions_train.csv"
+DEV_FILE    = "ai_backend/GoEmotions/emotion_data/processed_emotions_dev.csv"
+TEST_FILE   = "ai_backend/GoEmotions/emotion_data/processed_emotions_test.csv"
 
 MODEL_OUT   = "emotion_model"            # SavedModel folder (no extension)
 LE_OUT      = "emotion_label_encoder.pkl"

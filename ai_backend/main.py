@@ -17,6 +17,7 @@ Interactive docs:
 
 import uuid
 import logging
+import mysql.connector
 from contextlib import asynccontextmanager
 from typing import Optional
 
@@ -25,6 +26,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from inference import ModelBundle, predict
+
+from fastapi.staticfiles import StaticFiles  # <-- ייבוא מנגנון הקבצים הסטטיים
+from fastapi.responses import FileResponse    # <-- ייבוא רכיב החזרת קבצים
 
 # ─────────────────────────────────────────────────────────────────────────────
 # LOGGING
@@ -37,15 +41,27 @@ logger = logging.getLogger(__name__)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# APPLICATION STATE  (models loaded once, sessions stored in-memory)
+# APPLICATION STATE & DATABASE CONFIGURATION
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Global model bundle — populated in lifespan()
 model_bundle: Optional[ModelBundle] = None
 
-# In-memory session store  { session_id: history_state }
-sessions: dict[str, str] = {}
+# Database connection configuration 
+DB_CONFIG = {
+    "host": "localhost",
+    "port": 3308,             
+    "user": "root",
+    "password": "yaronsql", 
+    "database": "personaai_auth"         
+}
 
+def get_db_connection():
+    """
+    Establishes and returns a new connection to the MySQL database.
+    Ensures that each API request operates on a fresh, thread-safe connection.
+    """
+    return mysql.connector.connect(**DB_CONFIG)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -72,6 +88,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# 1. הגדרת התיקייה static כתיקיית קבצים סטטיים ציבורית
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# 2. יצירת נקודת קצה (Endpoint) שמחזירה את קובץ ה-HTML כאשר ניגשים ל-index.html
+@app.get("/index.html")
+async def get_index_page():
+    return FileResponse("static/index.html")
+
+# 3. אופציונלי: ניתוב גם של דף הבית הראשי לקובץ הצ'אט
+@app.get("/")
+async def get_home_page():
+    return FileResponse("static/index.html")
 # Allow requests from any origin (adjust in production)
 app.add_middleware(
     CORSMiddleware,
@@ -91,6 +119,10 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = Field(
         default=None,
         description="Omit to start a new session; include to continue an existing one."
+    )
+    user_id: Optional[int] = Field(
+        default=None, 
+        description="Optional Java User ID to link this session to a registered user."
     )
 
 class ChatResponse(BaseModel):
@@ -120,31 +152,72 @@ class HealthResponse(BaseModel):
 @app.post("/chat", response_model=ChatResponse, summary="Send a message to the chatbot")
 async def chat(req: ChatRequest):
     """
-    Main chat endpoint.
-
-    - If `session_id` is omitted, a new session is created and its ID is returned.
-    - The session's `history_state` is updated automatically after each turn.
-    - Pass the returned `session_id` in subsequent requests to continue the conversation.
+    Main chat endpoint with Database Persistence.
+    - Resolves or creates a session in the MySQL 'sessions' table.
+    - Processes text via the AI Inference Pipeline.
+    - Logs the full interaction into the MySQL 'logs' table.
     """
     if model_bundle is None:
         raise HTTPException(status_code=503, detail="Models are not loaded yet.")
 
-    # Resolve / create session
+    # Initialize database connection
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
     session_id = req.session_id or str(uuid.uuid4())
-    history_state = sessions.get(session_id, "start")
+    history_state = "start"
 
-    # Run the full pipeline
-    result = predict(model_bundle, req.message, history_state)
+    try:
+        # Step 1: Retrieve the current session state from the database
+        cursor.execute("SELECT current_state FROM sessions WHERE session_id = %s", (session_id,))
+        row = cursor.fetchone()
+        
+        if row:
+            history_state = row['current_state']
+        else:
+            # Create a new session entry if it does not exist
+            cursor.execute(
+                "INSERT INTO sessions (session_id, user_id, current_state, status) VALUES (%s, %s, %s, %s)",
+                (session_id, req.user_id, history_state, "active")
+            )
+            conn.commit()
 
-    # Persist new state
-    sessions[session_id] = result["next_state"]
+        # Step 2: Run the complete dual-head AI and logic pipeline
+        result = predict(model_bundle, req.message, history_state)
+
+        # Step 3: Persist the updated history state back to the sessions table
+        cursor.execute(
+            "UPDATE sessions SET current_state = %s, last_updated_at = NOW() WHERE session_id = %s",
+            (result["next_state"], session_id)
+        )
+
+        # Step 4: Archive the interaction details into the logs table
+        cursor.execute("""
+            INSERT INTO logs (session_id, message, intent, emotion, action, prev_state, next_state, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+        """, (
+            session_id, req.message, result["intent"], result["emotion"], 
+            result["action"], result["prev_state"], result["next_state"]
+        ))
+        
+        # Commit all transaction changes securely
+        conn.commit() 
+        
+    except Exception as e:
+        # Rollback prevents partial data corruption in case of unexpected failures
+        conn.rollback() 
+        logger.error(f"Database transaction failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal Database Error")
+    finally:
+        # Ensure resources are released immediately
+        cursor.close()
+        conn.close() 
 
     logger.info(
         f"[{session_id[:8]}] "
         f"intent={result['intent']}({result['intent_conf']:.2f}) | "
         f"emotion={result['emotion']}({result['emotion_conf']:.2f}) | "
-        f"action={result['action']} | "
-        f"state: {result['prev_state']} → {result['next_state']}"
+        f"action={result['action']}"
     )
 
     return ChatResponse(session_id=session_id, **result)
@@ -160,11 +233,28 @@ async def get_session(session_id: str):
 
 @app.delete("/session/{session_id}", summary="Reset a session (start fresh)")
 async def delete_session(session_id: str):
-    if session_id not in sessions:
-        raise HTTPException(status_code=404, detail="Session not found.")
-    sessions[session_id] = "start"
-    return {"detail": f"Session '{session_id}' reset to 'start'."}
+    """
+    Resets the session state back to 'start' and marks it as 'closed' in the database.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Perform soft-reset by updating status rather than deleting the historical record
+        cursor.execute(
+            "UPDATE sessions SET current_state = 'start', status = 'closed', last_updated_at = NOW() WHERE session_id = %s", 
+            (session_id,)
+        )
+        conn.commit()
+        
+    except Exception as e:
+        logger.error(f"Failed to reset session {session_id}: {e}")
+        raise HTTPException(status_code=500, detail="Database Error during session reset")
+    finally:
+        cursor.close()
+        conn.close()
 
+    return {"detail": f"Session '{session_id}' has been reset to 'start' and closed."}
 
 @app.get("/health", response_model=HealthResponse, summary="Health check")
 async def health():

@@ -17,19 +17,19 @@ import os
 import random
 from nltk.corpus import wordnet
 
-TARGET_COUNT = 3000
+TARGET_COUNT = 10000
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 
 try:
-    with open('GoEmotions/emotion_data/emotion_mapping.json', 'r') as f:
+    with open('C:\\Finals_Project\\ai_backend\\GoEmotions\\emotion_data\\emotion_mapping.json', 'r') as f:
         PROJECT_EMOTION_MAPPING = json.load(f)
 except FileNotFoundError:
     print("CRITICAL ERROR: 'emotion_mapping.json' not found.")
     exit()
 
 try:
-    with open('GoEmotions/emotion_data/emotions.txt', 'r') as f:
+    with open('C:\\Finals_Project\\ai_backend\\GoEmotions\\emotion_data\\emotions.txt', 'r') as f:
         idtolabel = {i: label for i, label in enumerate(f.read().splitlines())}
 except FileNotFoundError:
     print("CRITICAL ERROR: 'emotions.txt' not found.")
@@ -141,9 +141,9 @@ def balance_dataset(df, target_count):
 
 def main():
     files = {
-        'train': 'GoEmotions/emotion_data/train.tsv',
-        'dev'  : 'GoEmotions/emotion_data/dev.tsv',
-        'test' : 'GoEmotions/emotion_data/test.tsv',
+        'train': 'ai_backend/GoEmotions/emotion_data/train.tsv',
+        'dev'  : 'ai_backend/GoEmotions/emotion_data/dev.tsv',
+        'test' : 'ai_backend/GoEmotions/emotion_data/test.tsv',
     }
 
     for split, path in files.items():
@@ -157,7 +157,7 @@ def main():
             print(f"  Balancing classes:")
             df = balance_dataset(df, TARGET_COUNT)
 
-        out = f'GoEmotions/emotion_data/processed_emotions_{split}.csv'
+        out = f'ai_backend/GoEmotions/emotion_data/processed_emotions_{split}.csv'
         df.to_csv(out, index=False)
         print(f"  Saved -> '{out}' ({len(df)} rows)")
 

@@ -22,8 +22,15 @@
     height: 52px;
     display: flex;
     align-items: center;
+    justify-content: space-between; /* מרחיק את הלוגו מצד אחד ואת המשתמש מהצד השני */
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
     gap: 10px;
   }
+
   .topbar-logo {
     width: 28px; height: 28px;
     background: #2563eb;
@@ -32,6 +39,35 @@
   }
   .topbar-logo svg { width: 16px; height: 16px; fill: #fff; }
   .topbar h1 { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+
+  /* -- עיצובים חדשים לאזור המשתמש למעלה מימין -- */
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .user-info {
+    font-size: 14px;
+    color: #444;
+    font-weight: 500;
+  }
+  .sign-out-btn {
+    background: transparent;
+    color: #dc2626; /* צבע אדום לכפתור התנתקות */
+    border: 1px solid #dc2626;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none; /* במידה ונשתמש בתגית A במקום Button */
+  }
+  .sign-out-btn:hover {
+    background: #dc2626;
+    color: #fff;
+  }
+  /* ------------------------------------------- */
 
   .layout {
     display: grid;
@@ -301,10 +337,16 @@
 <body>
 
 <div class="topbar">
-  <div class="topbar-logo">
-    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+  <div class="topbar-left">
+    <div class="topbar-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+    </div>
+    <h1>PersonaAI — Conversation Classifier</h1>
   </div>
-  <h1>PersonaAI — Conversation Classifier</h1>
+  
+  <div class="topbar-right">
+    <a href="http://localhost:8080/login.html" class="sign-out-btn">Sign Out</a>
+  </div>
 </div>
 
 <div class="layout">
@@ -388,7 +430,14 @@ async function sendMessage() {
   chatEl.scrollTop = chatEl.scrollHeight;
 
   try {
-    const payload = { message: text };
+    // שולפים את ה -userId מה-localStorage
+    const storedUserId = localStorage.getItem('userId');
+
+    const payload = { 
+      message: text,
+      user_id: storedUserId ? parseInt(storedUserId) : null // מעבירים את ה-ID לשרת
+    };
+    
     if (activeSessionId) payload.session_id = activeSessionId;
 
     const res = await fetch(`${API_BASE}/chat`, {
@@ -428,7 +477,7 @@ async function sendMessage() {
     document.getElementById(thinkingId)?.remove();
     chatEl.insertAdjacentHTML('beforeend', `
       <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 14px;font-size:13px;color:#b91c1c;">
-        ❌ Error: ${escHtml(e.message)}
+        Error: ${escHtml(e.message)}
       </div>
     `);
   }

@@ -1,0 +1,10 @@
+com\PersonaAi\repository\UserRepository.class
+com\PersonaAi\config\WebConfig.class
+com\PersonaAi\dto\RegisterRequest.class
+com\PersonaAi\entity\User.class
+com\PersonaAi\entity\Session.class
+com\PersonaAi\config\SecurityConfig.class
+com\PersonaAi\entity\ChatLog.class
+com\PersonaAi\controller\AuthController.class
+com\PersonaAi\dto\LoginRequest.class
+com\PersonaAi\AuthApplication.class
